@@ -3379,9 +3379,21 @@ function deepBlock(name){
   const dp=DEEP[name];
   return dp?`<div class="deep-toggle">▸ להכיר לעומק</div><div class="deep">${dp}</div>`:'';
 }
+function optimizeImg(url){
+  // Wikimedia: use official Special:FilePath?width= (picks nearest allowed size, ~160KB vs multi-MB)
+  const wm=url.match(/upload\.wikimedia\.org\/wikipedia\/[a-z-]+\/(?:thumb\/)?[0-9a-f]\/[0-9a-f]{2}\/([^\/]+?)(?:\/\d+px-[^\/]+)?$/i);
+  if(wm){return 'https://commons.wikimedia.org/wiki/Special:FilePath/'+wm[1]+'?width=640';}
+  // Everything else: resize+webp via the free wsrv.nl image CDN
+  return 'https://images.weserv.nl/?url='+encodeURIComponent(url.replace(/^https?:\/\//,''))+'&w=640&output=webp&q=78';
+}
+function imgFallback(el){
+  if(el.dataset.full&&el.src!==el.dataset.full){el.src=el.dataset.full;}
+  else{el.remove();}
+}
 function imgBlock(name){
   const img=IMGS[name];
-  return img?`<img class="cimg" src="${img}" loading="lazy" alt="" onerror="this.remove()">`:'';
+  if(!img)return '';
+  return `<img class="cimg" src="${optimizeImg(img)}" data-full="${img.replace(/"/g,'&quot;')}" loading="lazy" alt="" onerror="imgFallback(this)">`;
 }
 
 const IMM=new Set(["Sphere Las Vegas","Al Wasl Plaza, Expo City Dubai","Outernet London","Lightroom",
